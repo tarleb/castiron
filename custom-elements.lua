@@ -3,7 +3,6 @@ local debug = require 'debug'
 
 local M = {}
 
-local custom_block_types = {}
 local custom_from_block = {}
 
 function M.define_block_element (name, fromblock, toblock)
@@ -47,6 +46,7 @@ local function make_new_metamethod (metatable, method_name)
   return metamethod
 end
 
+--- Modify the filter so it respects custom elements
 function M.modfilter (filter)
   for tag, fn in pairs(filter) do
     if type(fn) == 'function' then
@@ -59,6 +59,14 @@ function M.modfilter (filter)
           return customfn and customfn(elem) or elem
         end
       end
+    end
+  end
+  -- Make sure that there's a filter for all elements that are used to
+  -- encode custom elements. Otherwise the custom elements cannot be
+  -- filtered.
+  for tag in pairs(custom_from_block) do
+    if not filter[tag] then
+      filter[tag] = function() end
     end
   end
   return filter
