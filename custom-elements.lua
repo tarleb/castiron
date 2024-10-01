@@ -47,10 +47,37 @@ local function make_new_metamethod (metatable, method_name)
   return metamethod
 end
 
+function M.modfilter (filter)
+  for tag, fn in pairs(filter) do
+    if type(fn) == 'function' then
+      filter[tag] = function (elem)
+        local t = elem.tag
+        if t == tag then
+          return fn(elem)
+        else
+          local customfn = filter[t]
+          return customfn and customfn(elem) or elem
+        end
+      end
+    end
+  end
+  return filter
+end
+
 function M.init()
   local BlockMT = debug.getmetatable(pandoc.HorizontalRule())
+  local block_walk = BlockMT.methods.walk
   BlockMT.__index = make_new_metamethod(BlockMT, '__index')
   BlockMT.__tostring = make_new_metamethod(BlockMT, '__tostring')
+  BlockMT.methods.walk = function (filter, ...)
+    return block_walk(M.modfilter(filter), ...)
+  end
+
+  local BlocksMT = debug.getmetatable(pandoc.Blocks{})
+  local blocks_walk = BlocksMT.walk
+  BlocksMT.walk = function (self, filter, ...)
+    return blocks_walk(self, M.modfilter(filter), ...)
+  end
 end
 
 return M
