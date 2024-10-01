@@ -18,20 +18,25 @@ local function make_new_metamethod (metatable, method_name)
   local orig_method = metatable[method_name]
 
   local function metamethod (t, ...)
+    -- Check if the object already has a caching table
     if debug.getuservalue(t, 1) then
+      -- Has a table. Keep as is.
       return orig_method(t, ...)
     else
+      -- Doesn't have a caching table yet. Check if it's a
+      -- "pandocized" custom element.
       local tag = metatable.getters.tag(t)
       -- set caching table, as `t` should now behave like a normal block
       debug.setuservalue(t, {tag = tag}, 1)
       local newtable, newmetatable
-      for _, fn in ipairs(custom_from_block[tag]) do
+      for _, fn in ipairs(custom_from_block[tag] or {}) do
         newtable, newmetatable = fn(t)
         if newtable then
           break
         end
       end
       if newtable then
+        -- set alternative type
         debug.setuservalue(t, newtable, 1)
         debug.setmetatable(t, newmetatable)
         return newmetatable[method_name](t, ...)
