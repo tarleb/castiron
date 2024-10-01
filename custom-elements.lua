@@ -73,10 +73,28 @@ function M.init()
     return block_walk(M.modfilter(filter), ...)
   end
 
+  local InlineMT = debug.getmetatable(pandoc.HorizontalRule())
+  local inline_walk = InlineMT.methods.walk
+  InlineMT.methods.walk = function (filter, ...)
+    return inline_walk(M.modfilter(filter), ...)
+  end
+
   local BlocksMT = debug.getmetatable(pandoc.Blocks{})
   local blocks_walk = BlocksMT.walk
   BlocksMT.walk = function (self, filter, ...)
     return blocks_walk(self, M.modfilter(filter), ...)
+  end
+
+  local InlinesMT = debug.getmetatable(pandoc.Inlines{})
+  local inlines_walk = InlinesMT.walk
+  InlinesMT.walk = function (self, filter, ...)
+    return inlines_walk(self, M.modfilter(filter), ...)
+  end
+
+  local PandocMT = debug.getmetatable(pandoc.Pandoc{})
+  local pandoc_walk = PandocMT.methods.walk
+  PandocMT.walk = function (self, filter, ...)
+    return pandoc_walk(self, M.modfilter(filter), ...)
   end
 end
 
