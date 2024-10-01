@@ -38,6 +38,9 @@ local function make_new_metamethod (metatable, method_name)
         -- set alternative type
         debug.setuservalue(t, newtable, 1)
         debug.setmetatable(t, newmetatable)
+        -- Free the Haskell object associated with this object.
+        -- It is no longer needed.
+        metatable.__gc(t)
         return newmetatable[method_name](t, ...)
       end
       return orig_method(t, ...)
