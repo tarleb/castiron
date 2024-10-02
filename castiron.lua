@@ -1,3 +1,8 @@
+--- castiron – *C*ustom *AST* elements for pandoc Lua
+--
+-- Copyright: © 2024 Albert Krewinkel <albert+pandoc@tarleb.com>
+-- License: MIT
+
 local pandoc = require 'pandoc'
 local List   = require 'pandoc.List'
 local debug  = require 'debug'
