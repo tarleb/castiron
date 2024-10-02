@@ -95,10 +95,21 @@ local function make_new_metamethod (metatable, method_name)
   return metamethod
 end
 
+local block_tags = List(pairs(pandoc.Block.constructor))
+
 --- Modify the filter so it respects custom elements
 function M.modfilter (filter)
+  -- Make sure that there's a filter for all elements that are used to
+  -- encode custom elements. Otherwise the custom elements cannot be
+  -- filtered.
+  for tag in pairs(custom_from_block) do
+    if not filter[tag] then
+      filter[tag] = function() end
+    end
+  end
+  -- Wrap default Block filters to catch custom elements.
   for tag, fn in pairs(filter) do
-    if type(fn) == 'function' then
+    if block_tags:includes(tag) then
       filter[tag] = function (elem)
         local t = elem.tag
         if t == tag then
@@ -108,14 +119,6 @@ function M.modfilter (filter)
           return customfn and customfn(elem) or elem
         end
       end
-    end
-  end
-  -- Make sure that there's a filter for all elements that are used to
-  -- encode custom elements. Otherwise the custom elements cannot be
-  -- filtered.
-  for tag in pairs(custom_from_block) do
-    if not filter[tag] then
-      filter[tag] = function() end
     end
   end
   return filter

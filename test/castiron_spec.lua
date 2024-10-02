@@ -45,7 +45,23 @@ describe('castiron', function ()
     local filter = {Div = function () seen = true end}
     local blks   = pandoc.Blocks{'plant', exm}
     local result = blks:walk(filter)
-    assert.is_falsy(seen)
+    assert.is_false(seen)
     assert.are_same(blks, result)
+  end)
+
+  it('filtering non-custom Blocks still works', function ()
+    local exm = pandoc.Div('test')
+    local seen = false
+    local filter = {Div = function () seen = true end}
+    pandoc.Blocks{'plant', exm}:walk(filter)
+    assert.is_true(seen)
+  end)
+
+  it('allows to filter custom elements', function ()
+    local exm = pandoc.Div('test', {'', {'Example'}})
+    local seen = false
+    local filter = {Example = function () seen = true end}
+    pandoc.Blocks{'plant', exm}:walk(filter)
+    assert.is_true(seen)
   end)
 end)
