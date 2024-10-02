@@ -99,9 +99,9 @@ filter_on_example = {
 print(blocks[1])
 print(blocks:walk(filter)[1])
 
-local custom = require 'custom-elements'
-custom.init()
-custom.define_block_element('Example', example_from_block)
+local castiron = require 'castiron'
+castiron.init()
+castiron.define_block_element('Example', example_from_block)
 
 print(blocks[1])
 print(blocks:walk(filter)[1])
