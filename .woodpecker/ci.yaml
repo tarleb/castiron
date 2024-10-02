@@ -1,0 +1,10 @@
+when:
+  - event: push
+
+steps:
+  - name: Test
+    image: pandoc/minimal:edge-ubuntu
+    commands:
+      # Install dependencies
+      - apk add lua5.4-busted
+      - busted-5.4
