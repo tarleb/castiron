@@ -5,6 +5,7 @@ local example_private = List{}
 
 local Example
 Example = {
+  tag = 'Example',
   __name = 'Example',
   __tostring = function (t)
     return table.concat{
@@ -47,13 +48,11 @@ Example = {
     end
   }
 }
-Example.__index = Example
 function Example:__call (o)
-  o.t = 'Example'
   o.private = pandoc.Blocks(o.private)
   o.public = pandoc.Blocks(o.public)
   o.attr = o.attr or pandoc.Attr()
-  return setmetatable(o, Example)
+  return setmetatable(o, self)
 end
 setmetatable(Example, Example)
 
@@ -92,9 +91,9 @@ filter = {
 -- print(blocks[1])
 -- print(blocks:walk(filter)[1])
 
--- local castiron = require 'castiron'
--- castiron.init()
--- castiron.define_block_element('Example', example_from_block)
+local castiron = require 'castiron'
+castiron.init()
+castiron.define_block_element(Example)
 
--- print(blocks[1])
--- print(blocks:walk(filter)[1])
+print(blocks[1])
+print(blocks:walk(filter)[1])

@@ -27,7 +27,10 @@ local custom_block_metatable = {
     return tostring(getuservalue(t, 1))
   end,
   __index = function (t, idx)
-    return getuservalue(t, 1)[idx]
+    local uv = getuservalue(t, 1)
+    return (idx == 't' or idx == 'tag')
+      and getmetatable(uv).__name
+      or uv[idx]
   end,
   __newindex = function (t, idx, v)
     getuservalue(t, 1)[idx] = v

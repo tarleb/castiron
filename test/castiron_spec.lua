@@ -4,8 +4,7 @@ local List     = require 'pandoc.List'
 
 castiron.init()
 
-local Example = {tag = 'Example'}
-Example.__index = Example
+local Example = {}
 Example.__name = 'Example'
 function Example:__tostring ()
   return table.concat{
@@ -19,7 +18,7 @@ function Example:__toblock ()
   return pandoc.Div(self.content, {'', {'Example'}})
 end
 function Example:__call(obj)
-  local exm = {content = obj.content}
+  local exm = {tag = self.__name, content = obj.content}
   return setmetatable(exm, self)
 end
 Example.__fromblock = {
