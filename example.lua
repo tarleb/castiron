@@ -8,11 +8,11 @@ local example_element_mt = {
   __tostring = function (t)
     return table.concat{
       'Example {',
-      '\n  attr:    ',
+      '\n  attr    = ',
       tostring(t.attr),
-      ',\n  public:  ',
+      ',\n  public  = ',
       tostring(t.public),
-      ',\n  private: ',
+      ',\n  private = ',
       tostring(t.private or List{}),
       ',\n}'
     }
@@ -70,16 +70,16 @@ end
 
 ------------------------------------------------------------------------
 
-expl = Example{
+exm = Example{
   tag = 'Example',
   public  = pandoc.CodeBlock('This *should* be filtered'),
   private = pandoc.CodeBlock('This should not be filtered!'),
   attr = pandoc.Attr(),
 }
 
-print(expl)
+print(exm)
 
-blocks = pandoc.Blocks{expl}
+blocks = pandoc.Blocks{exm}
 
 filter = {
   Div = function (div)
@@ -92,16 +92,16 @@ filter = {
   end,
 }
 
-filter_on_example = {
-  Example = print,
-}
+-- filter_on_example = {
+--   Example = print,
+-- }
 
-print(blocks[1])
-print(blocks:walk(filter)[1])
+-- print(blocks[1])
+-- print(blocks:walk(filter)[1])
 
-local castiron = require 'castiron'
-castiron.init()
-castiron.define_block_element('Example', example_from_block)
+-- local castiron = require 'castiron'
+-- castiron.init()
+-- castiron.define_block_element('Example', example_from_block)
 
-print(blocks[1])
-print(blocks:walk(filter)[1])
+-- print(blocks[1])
+-- print(blocks:walk(filter)[1])
