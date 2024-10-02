@@ -3,7 +3,8 @@ local List   = require 'pandoc.List'
 
 local example_private = List{}
 
-local example_element_mt = {
+local Example
+Example = {
   __name = 'Example',
   __tostring = function (t)
     return table.concat{
@@ -28,32 +29,33 @@ local example_element_mt = {
     attr.attributes['custom-element-placeholder'] = private_id
     return pandoc.Div(t.public, attr)
   end,
+  __fromblock = {
+    Div = function (div)
+      if div.classes == List{'Example'} then
+        local private_id = div.attr.attributes['custom-element-placeholder']
+        local private
+        if private_id then
+          local i = tonumber(private_id)
+          private = example_private:remove(i)
+        end
+        return Example {
+          public = div.content,
+          private = private,
+          attr = div.attr,
+        }
+      end
+    end
+  }
 }
-function Example (o)
+Example.__index = Example
+function Example:__call (o)
   o.t = 'Example'
   o.private = pandoc.Blocks(o.private)
   o.public = pandoc.Blocks(o.public)
   o.attr = o.attr or pandoc.Attr()
-  return setmetatable(o, example_element_mt)
+  return setmetatable(o, Example)
 end
-
-example_from_block = {
-  Div = function (div)
-    if div.classes == List{'Example'} then
-      local private_id = div.attr.attributes['custom-element-placeholder']
-      local private
-      if private_id then
-        local i = tonumber(private_id)
-        private = example_private:remove(i)
-      end
-      return Example {
-        public = div.content,
-        private = private,
-        attr = div.attr,
-      }
-    end
-  end
-}
+setmetatable(Example, Example)
 
 pretty = function (x)
   print(pandoc.write(pandoc.Pandoc(x), 'native'))

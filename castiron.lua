@@ -41,7 +41,13 @@ local custom_block_metatable = {
   end,
 }
 
-function M.define_block_element (name, fromblock)
+--- Register the given metatable as a custom element type.
+function M.define_block_element (metatable)
+  local name = assert(metatable.__name, 'custom elements must have a name')
+  local fromblock = assert(
+    type(metatable.__fromblock) == 'table' and metatable.__fromblock,
+    'custom elements must have __fromblock table'
+  )
   custom_native_tags[name] = List{}
   for tag, fn in pairs(fromblock) do
     custom_from_block[tag] = custom_from_block[tag] or pandoc.List()
@@ -50,6 +56,7 @@ function M.define_block_element (name, fromblock)
   end
 end
 
+--- Creates a new metamethod that can convert blocks to custom elements.
 local function make_new_metamethod (metatable, method_name)
   local orig_method = metatable[method_name]
 
@@ -114,6 +121,8 @@ function M.modfilter (filter)
   return filter
 end
 
+--- Patch the Lua metatables for pandoc's AST elements to add support
+--- for custom elements.
 function M.init()
   local BlockMT = debug.getmetatable(pandoc.HorizontalRule())
   local block_walk = BlockMT.methods.walk
