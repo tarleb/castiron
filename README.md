@@ -1,4 +1,4 @@
-# castiron – _C_ustom _AST_ elements
+# castiron – *C*ustom _AST_ elements
 
 Define custom pandoc *Block* or *Inline* elements to be used in
 Lua scripts; supports filtering and transparent conversion to and
