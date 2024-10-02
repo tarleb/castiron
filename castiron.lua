@@ -1,16 +1,48 @@
 local pandoc = require 'pandoc'
-local debug = require 'debug'
+local List   = require 'pandoc.List'
+local debug  = require 'debug'
+
+local getuservalue = debug.getuservalue
 
 local M = {}
 
+--- List of functions to convert from pandoc element to custom, indexed by
+--- pandoc tag.
 local custom_from_block = {}
 
-function M.define_block_element (name, fromblock, toblock)
+--- Map from custom elements to the native elements with which they can be
+--- marshalled/unmarshalled.
+local custom_native_tags = {}
+
+--- Metatable used for the userdata values of custom elements.
+-- Delegates most requests to the uservalue.
+local custom_block_metatable = {
+  __name = 'Block',
+  __tostring = function (t)
+    return tostring(getuservalue(t, 1))
+  end,
+  __index = function (t, idx)
+    return getuservalue(t, 1)[idx]
+  end,
+  __newindex = function (t, idx, v)
+    getuservalue(t, 1)[idx] = v
+  end,
+  __toblock = function(t)
+    local uv = getuservalue(t, 1)
+    local toblock = getmetatable(uv).__toblock
+    return toblock
+      and toblock(uv)
+      or error('custom elements must have a __toblock metamethod')
+  end,
+}
+
+function M.define_block_element (name, fromblock)
+  custom_native_tags[name] = List{}
   for tag, fn in pairs(fromblock) do
     custom_from_block[tag] = custom_from_block[tag] or pandoc.List()
     custom_from_block[tag]:insert(fn)
+    custom_native_tags[name]:insert(tag)
   end
-  -- custom_block_types[name] = custom_element_type
 end
 
 local function make_new_metamethod (metatable, method_name)
@@ -18,18 +50,19 @@ local function make_new_metamethod (metatable, method_name)
 
   local function metamethod (t, ...)
     -- Check if the object already has a caching table
-    if debug.getuservalue(t, 1) then
+    if getuservalue(t, 1) then
       -- Has a table. Keep as is.
       return orig_method(t, ...)
     else
       -- Doesn't have a caching table yet. Check if it's a
       -- "pandocized" custom element.
       local tag = metatable.getters.tag(t)
-      -- set caching table, as `t` should now behave like a normal block
+      -- set caching table, as `t` should behave like a normal block
+      -- in the converter functions.
       debug.setuservalue(t, {tag = tag}, 1)
-      local newtable, newmetatable
+      local newtable
       for _, fn in ipairs(custom_from_block[tag] or {}) do
-        newtable, newmetatable = fn(t)
+        newtable = fn(t)
         if newtable then
           break
         end
@@ -37,11 +70,12 @@ local function make_new_metamethod (metatable, method_name)
       if newtable then
         -- set alternative type
         debug.setuservalue(t, newtable, 1)
-        debug.setmetatable(t, newmetatable)
+        debug.setmetatable(t, custom_block_metatable)
         -- Free the Haskell object associated with this object.
         -- It is no longer needed.
         metatable.__gc(t)
-        return newmetatable[method_name](t, ...)
+        local newmm = custom_block_metatable[method_name]
+        return newmm(t, ...)
       end
       return orig_method(t, ...)
     end
@@ -110,4 +144,3 @@ function M.init()
 end
 
 return M
-

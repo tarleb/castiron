@@ -28,15 +28,8 @@ local example_element_mt = {
     attr.attributes['custom-element-placeholder'] = private_id
     return pandoc.Div(t.public, attr)
   end,
-  __index = function (t, idx)
-    return debug.getuservalue(t, 1)[idx]
-  end,
-  __newindex = function (t, idx, v)
-    debug.getuservalue(t, 1)[idx] = v
-  end
 }
-
-local function Example (o)
+function Example (o)
   o.t = 'Example'
   o.private = pandoc.Blocks(o.private)
   o.public = pandoc.Blocks(o.public)
@@ -53,13 +46,11 @@ example_from_block = {
         local i = tonumber(private_id)
         private = example_private:remove(i)
       end
-      local obj = {
-        tag = 'Example',
+      return Example {
         public = div.content,
         private = private,
         attr = div.attr,
       }
-      return obj, example_element_mt
     end
   end
 }
