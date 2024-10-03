@@ -61,6 +61,9 @@ local custom_block_metatable = function (objmetatable)
   return udmetatable
 end
 
+--- Map of userdata metatables indexed by custom element metatables
+local userdata_metatables = {}
+
 --- Register the given metatable as a custom element type.
 function M.define_block_element (metatable)
   local name = assert(metatable.__name, 'custom elements must have a name')
@@ -74,6 +77,7 @@ function M.define_block_element (metatable)
     custom_from_block[tag]:insert(fn)
     custom_native_tags[name]:insert(tag)
   end
+  userdata_metatables[metatable] = custom_block_metatable(metatable)
 end
 
 --- Creates a new metamethod that can convert blocks to custom elements.
@@ -100,15 +104,19 @@ local function make_new_metamethod (metatable, method_name)
         end
       end
       if newtable then
-        local udmetatable = custom_block_metatable(getmetatable(newtable))
-        -- set alternative type
-        debug.setuservalue(t, newtable, 1)
-        debug.setmetatable(t, udmetatable)
-        -- Free the Haskell object associated with this object.
-        -- It is no longer needed.
-        metatable.__gc(t)
-        local newmm = udmetatable[method_name]
-        return newmm(t, ...)
+        local udmetatable = userdata_metatables[getmetatable(newtable)]
+        if udmetatable then
+          -- set alternative type
+          debug.setuservalue(t, newtable, 1)
+          debug.setmetatable(t, udmetatable)
+          -- Free the Haskell object associated with this object.
+          -- It is no longer needed.
+          metatable.__gc(t)
+          local newmm = udmetatable[method_name]
+          return newmm(t, ...)
+        else
+          warn('No available userdata metatable for custom element.')
+        end
       end
       return orig_method(t, ...)
     end
@@ -180,5 +188,7 @@ function M.init()
     return pandoc_walk(self, M.modfilter(filter), ...)
   end
 end
+
+M.userdata_metatables = userdata_metatables
 
 return M
