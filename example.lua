@@ -62,17 +62,23 @@ end
 
 ------------------------------------------------------------------------
 
+--- Create a plain Example object
 exm = Example{
   tag = 'Example',
   public  = pandoc.CodeBlock('This *should* be filtered'),
   private = pandoc.CodeBlock('This should not be filtered!'),
   attr = pandoc.Attr(),
 }
+print('Plain Example element:', exm)
 
-print(exm)
-
+--- Use the object as a Block
 blocks = pandoc.Blocks{exm}
+print('Blocks with an example element:\n', blocks)
+print('Note that this shows the pandoc representation.')
+print('Example block in Blocks list:\n', blocks[1])
+print('It is converted back to a custom Lua object')
 
+--- Filter that just marks Div and CodeBlock elements with class 'filtered'
 filter = {
   Div = function (div)
     div.classes:insert('filtered')
@@ -84,16 +90,8 @@ filter = {
   end,
 }
 
--- filter_on_example = {
---   Example = print,
--- }
-
--- print(blocks[1])
--- print(blocks:walk(filter)[1])
-
 local castiron = require 'castiron'
 castiron.init()
 castiron.define_block_element(Example)
 
-print(blocks[1])
-print(blocks:walk(filter)[1])
+print('Filtered Example element:\n', blocks:walk(filter)[1])
