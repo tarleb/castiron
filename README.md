@@ -7,6 +7,13 @@ from pandoc's native format.
 **Important**: This relies on unpublished pandoc features.
 *Castiron* currently requires a nightly pandoc build.
 
+> [!NOTE]
+> This package is developed [on Codeberg][], so this repo might be
+> slightly out of date at times. However, please do feel free to
+> raise issues or open PRs here on GitHub if you want to, we will
+> then merge them back into the main branch.
+
+[on Codeberg]: https://codeberg.org/tarleb/castiron
 
 ## Usage
 
