@@ -4,8 +4,9 @@ Define custom pandoc *Block* or *Inline** elements to be used in
 Lua scripts; supports filtering and transparent conversion to and
 from pandoc's native format.
 
-**Important**: This relies on unpublished pandoc features.
-*Castiron* currently requires a nightly pandoc build.
+> [!IMPORTANT]
+> This package relies on unpublished pandoc features.
+> *Castiron* currently requires a nightly pandoc build.
 
 > [!NOTE]
 > This package is developed [on Codeberg][], so this repo might be
