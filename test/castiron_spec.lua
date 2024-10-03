@@ -63,4 +63,13 @@ describe('castiron', function ()
     pandoc.Blocks{'plant', exm}:walk(filter)
     assert.is_true(seen)
   end)
+
+  it('forwards metamethod calls to the userobject', function ()
+    local exm = Example{ content = pandoc.Blocks('test') }
+    local exmblk = pandoc.Div('test', {'', {'Example'}})
+    assert.are_equal(
+      tostring(exm),
+      tostring(exmblk)
+    )
+  end)
 end)

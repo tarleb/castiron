@@ -19,30 +19,47 @@ local custom_from_block = {}
 --- marshalled/unmarshalled.
 local custom_native_tags = {}
 
+local metamethods = List{
+  '__add', '__sub', '__mul', '__div', '__mod', '__pow', '__unm', '__idiv',
+  '__band', '__bor', '__bxor', '__bnot', '__shl', '__shr', '__concat',
+  '__len', '__eq', '__lt', '__le', '__call', '__tostring'
+}
+
 --- Metatable used for the userdata values of custom elements.
 -- Delegates most requests to the uservalue.
-local custom_block_metatable = {
-  __name = 'Block',
-  __tostring = function (t)
-    return tostring(getuservalue(t, 1))
-  end,
-  __index = function (t, idx)
-    local uv = getuservalue(t, 1)
-    return (idx == 't' or idx == 'tag')
-      and getmetatable(uv).__name
-      or uv[idx]
-  end,
-  __newindex = function (t, idx, v)
-    getuservalue(t, 1)[idx] = v
-  end,
-  __toblock = function(t)
-    local uv = getuservalue(t, 1)
-    local toblock = getmetatable(uv).__toblock
-    return toblock
-      and toblock(uv)
-      or error('custom elements must have a __toblock metamethod')
-  end,
-}
+local custom_block_metatable = function (objmetatable)
+  local udmetatable = {
+    __name = 'Block',
+    __index = function (t, idx)
+      local uv = getuservalue(t, 1)
+      return (idx == 't' or idx == 'tag')
+        and getmetatable(uv).__name
+        or uv[idx]
+    end,
+    __newindex = function (t, idx, v)
+      getuservalue(t, 1)[idx] = v
+    end,
+    __toblock = function(t)
+      local uv = getuservalue(t, 1)
+      local toblock = getmetatable(uv).__toblock
+      return toblock
+        and toblock(uv)
+        or error('custom elements must have a __toblock metamethod')
+    end,
+  }
+
+  -- forward metamethods to the metatable of the userdata
+  for name in metamethods:iter() do
+    local metamethod = objmetatable[name]
+    if metamethod then
+      udmetatable[name] = function (t, ...)
+        local uv = getuservalue(t, 1)
+        return objmetatable[name](uv, ...)
+      end
+    end
+  end
+  return udmetatable
+end
 
 --- Register the given metatable as a custom element type.
 function M.define_block_element (metatable)
@@ -83,13 +100,14 @@ local function make_new_metamethod (metatable, method_name)
         end
       end
       if newtable then
+        local udmetatable = custom_block_metatable(getmetatable(newtable))
         -- set alternative type
         debug.setuservalue(t, newtable, 1)
-        debug.setmetatable(t, custom_block_metatable)
+        debug.setmetatable(t, udmetatable)
         -- Free the Haskell object associated with this object.
         -- It is no longer needed.
         metatable.__gc(t)
-        local newmm = custom_block_metatable[method_name]
+        local newmm = udmetatable[method_name]
         return newmm(t, ...)
       end
       return orig_method(t, ...)
